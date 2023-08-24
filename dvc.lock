@@ -1,0 +1,366 @@
+schema: '2.0'
+stages:
+  process_orca_data:
+    cmd: python src/process_orca_data.py
+    deps:
+    - path: data/raw/1M-GPT4-Augmented.parquet
+      hash: md5
+      md5: ed5a8dfd509ac465017f1b7a8183a525
+      size: 1008442855
+    - path: src/process_orca_data.py
+      hash: md5
+      md5: 0ad7bc7ed23061fc8287431d86731271
+      size: 955
+    params:
+      params.yaml:
+        data.process_orca_data:
+          subset_size: 200
+          out_jsonl_filename: orca_processed_subset.jsonl
+    outs:
+    - path: data/processed/orca_processed_subset.jsonl
+      hash: md5
+      md5: e210db0b66fddee65aa3c5a95c9f4527
+      size: 345369
+  generate_identity_data:
+    cmd: python src/generate_identity_data.py
+    deps:
+    - path: src/generate_identity_data.py
+      hash: md5
+      md5: d0a96288e40469f12d4908854b0a6946
+      size: 7025
+    params:
+      params.yaml:
+        data.process_identity_data:
+          subset_size: 1
+          out_jsonl_filename: identity_subset.jsonl
+    outs:
+    - path: data/processed/identity_subset.jsonl
+      hash: md5
+      md5: 2e3cc01b4cee0b117d7e91a56f11ae3e
+      size: 142646
+  merge_data:
+    cmd: python src/merge_data_splits.py && echo "N lines in train.jsonl" && wc -l
+      data/final/train.jsonl && echo "N lines in val.jsonl" && wc -l data/final/val.jsonl
+    deps:
+    - path: data/split/
+      hash: md5
+      md5: 1765e77dbbb54a3a63314601132e509f.dir
+      size: 1786567
+      nfiles: 7
+    - path: src/merge_data_splits.py
+      hash: md5
+      md5: 1c9f96bcf2cb13eec5ab77c8aa073999
+      size: 704
+    outs:
+    - path: data/final/train.jsonl
+      hash: md5
+      md5: 914738628c07ce749cded1381486688a
+      size: 1414582
+    - path: data/final/val.jsonl
+      hash: md5
+      md5: fb96b291050836e3f96f9ec269f76d70
+      size: 371875
+  data_split:
+    cmd: python src/data_split.py && echo "Train dataset size" && wc -l data/split/train.jsonl
+      && echo "Val dataset size" && wc -l data/split/val.jsonl
+    deps:
+    - path: data/processed/merged.jsonl
+      hash: md5
+      md5: 34c29ae8b4b82c17b65bf1719e5e0b05
+      size: 17407596
+    - path: src/data_split.py
+      hash: md5
+      md5: b92eb250f0e670fbc56c23ed14c7c785
+      size: 1372
+    outs:
+    - path: data/split/train.jsonl
+      hash: md5
+      md5: af8a1a6050e2616e63f592a623ab3b32
+      size: 13935962
+    - path: data/split/val.jsonl
+      hash: md5
+      md5: 43ca3b29f33424138e6c54e3b08c4fbc
+      size: 3471634
+  data_split@identity.jsonl:
+    cmd: python src/data_split.py "data/processed/identity.jsonl"
+    deps:
+    - path: data/processed
+      hash: md5
+      md5: 99ca8d79c3e7bbe0ed5afa9ce7064297.dir
+      size: 170457
+      nfiles: 3
+    - path: src/data_split.py
+      hash: md5
+      md5: 69f5445c57145610d414c951eb5a6b2e
+      size: 1410
+    params:
+      params.yaml:
+        data.data_split:
+          val_size: 0.2
+    outs:
+    - path: data/split/train_identity.jsonl
+      hash: md5
+      md5: d41d8cd98f00b204e9800998ecf8427e
+      size: 0
+    - path: data/split/val_identity.jsonl
+      hash: md5
+      md5: d41d8cd98f00b204e9800998ecf8427e
+      size: 0
+  data_split@orca_processed_subset.jsonl:
+    cmd: python src/data_split.py "data/processed/orca_processed_subset.jsonl"
+    deps:
+    - path: data/processed
+      hash: md5
+      md5: e05e341599ebf40ffbc64602733bab2f.dir
+      size: 1786542
+      nfiles: 4
+    - path: src/data_split.py
+      hash: md5
+      md5: 69f5445c57145610d414c951eb5a6b2e
+      size: 1410
+    params:
+      params.yaml:
+        data.data_split:
+          val_size: 0.2
+    outs:
+    - path: data/split/train_orca_processed_subset.jsonl
+      hash: md5
+      md5: 5a05b06102eddcbbed40bd1908abb971
+      size: 276081
+    - path: data/split/val_orca_processed_subset.jsonl
+      hash: md5
+      md5: 9265c5c9b9044295385b8ebe2553ac06
+      size: 69288
+  data_verification:
+    cmd: python src/data_verification.py > /tmp/data_check_ok.txt
+    deps:
+    - path: data/final/train.jsonl
+      hash: md5
+      md5: 7fe92b1ba8841dbc2e43158c48137ef4
+      size: 527817
+    - path: data/final/val.jsonl
+      hash: md5
+      md5: f16edb3dd9e880dc2403a4340b30aabe
+      size: 122925
+    - path: src/data_verification.py
+      hash: md5
+      md5: a85d5de0ffb9b272f67c7bf1c8d36285
+      size: 917
+    outs:
+    - path: /tmp/data_check_ok.txt
+      hash: md5
+      md5: f6760a42217dfae743a330fbfa2df775
+      size: 56
+  train:
+    cmd: python src/train.py
+    deps:
+    - path: data/final/train.jsonl
+      hash: md5
+      md5: 914738628c07ce749cded1381486688a
+      size: 1414582
+    - path: data/final/val.jsonl
+      hash: md5
+      md5: fb96b291050836e3f96f9ec269f76d70
+      size: 371875
+    - path: models/Llama-2-7b-chat-hf
+      hash: md5
+      md5: 8523c248f1a2493fe1a485f0bb379d08.dir
+      size: 26956244462
+      nfiles: 16
+    - path: src/train.py
+      hash: md5
+      md5: 3798ebd9b9e200166d3eb38d937ee9f0
+      size: 4823
+    params:
+      params.yaml:
+        train:
+          model_size: 7b
+          pretrained_model_path: models/Llama-2-13b-chat-hf
+          model_adapter_out_path: models/finetuned-model-adapter-13b
+          finetuned_model_out_path: models/Llama-2-13b-finetuned-merged
+          model_tokenizer_args:
+            use_4bit: true
+            bnb_4bit_compute_dtype: float16
+            bnb_4bit_quant_type: nf4
+            use_nested_quant: false
+            device_map:
+              '': 0
+          lora_args:
+            lora_alpha: 16
+            lora_dropout: 0.1
+            r: 64
+            bias: none
+            task_type: CAUSAL_LM
+          trainer_args:
+            output_dir: dvclive/artifacts
+            num_train_epochs: 2
+            per_device_train_batch_size: 8
+            optim: paged_adamw_32bit
+            save_total_limit: 1
+            load_best_model_at_end: true
+            save_steps: 20
+            logging_steps: 10
+            eval_steps: 10
+            lr_scheduler_type: constant
+            warmup_ratio: 0.03
+            learning_rate: 0.0002
+            weight_decay: 0.001
+            fp16: false
+            bf16: true
+            group_by_length: true
+            evaluation_strategy: steps
+    outs:
+    - path: models/finetuned-model-adapter-7b
+      hash: md5
+      md5: 751629fb5da61602cb70fe728d3aadc2.dir
+      size: 134264668
+      nfiles: 3
+  merge_model:
+    cmd: python src/merge_model.py
+    deps:
+    - path: models/Llama-2-7b-chat-hf
+      hash: md5
+      md5: 8523c248f1a2493fe1a485f0bb379d08.dir
+      size: 26956244462
+      nfiles: 16
+    - path: models/finetuned-model-adapter-7b
+      hash: md5
+      md5: 751629fb5da61602cb70fe728d3aadc2.dir
+      size: 134264668
+      nfiles: 3
+    - path: src/merge_model.py
+      hash: md5
+      md5: bbabd9d5fc7695cbaefbe69941f61f85
+      size: 1675
+    params:
+      params.yaml:
+        train:
+          model_size: 7b
+          pretrained_model_path: models/Llama-2-13b-chat-hf
+          model_adapter_out_path: models/finetuned-model-adapter-13b
+          finetuned_model_out_path: models/Llama-2-13b-finetuned-merged
+          model_tokenizer_args:
+            use_4bit: true
+            bnb_4bit_compute_dtype: float16
+            bnb_4bit_quant_type: nf4
+            use_nested_quant: false
+            device_map:
+              '': 0
+          lora_args:
+            lora_alpha: 16
+            lora_dropout: 0.1
+            r: 64
+            bias: none
+            task_type: CAUSAL_LM
+          trainer_args:
+            output_dir: dvclive/artifacts
+            num_train_epochs: 2
+            per_device_train_batch_size: 8
+            optim: paged_adamw_32bit
+            save_total_limit: 1
+            load_best_model_at_end: true
+            save_steps: 20
+            logging_steps: 10
+            eval_steps: 10
+            lr_scheduler_type: constant
+            warmup_ratio: 0.03
+            learning_rate: 0.0002
+            weight_decay: 0.001
+            fp16: false
+            bf16: true
+            group_by_length: true
+            evaluation_strategy: steps
+    outs:
+    - path: models/Llama-2-7b-finetuned-merged
+      hash: md5
+      md5: 6e229e571247b4a7a2eae59558a13e71.dir
+      size: 13478803645
+      nfiles: 8
+  process_platypus_data:
+    cmd: python src/process_platypus_data.py
+    deps:
+    - path: data/raw/open_platypus.parquet
+      hash: md5
+      md5: f41e9abd251ced31cb7970437ac1411b
+      size: 15545530
+    - path: src/process_platypus_data.py
+      hash: md5
+      md5: d539e3bc06a6d6cfbd52ba9bc463eab3
+      size: 962
+    params:
+      params.yaml:
+        data.process_platypus_data:
+          subset_size: 1000
+          out_jsonl_filename: platypus_processed_subset.jsonl
+    outs:
+    - path: data/processed/platypus_processed_subset.jsonl
+      hash: md5
+      md5: c23651e787d4696ccb2213cbd27d80f7
+      size: 1298442
+  data_split@identity_subset.jsonl:
+    cmd: python src/data_split.py "data/processed/identity_subset.jsonl"
+    deps:
+    - path: data/processed
+      hash: md5
+      md5: e05e341599ebf40ffbc64602733bab2f.dir
+      size: 1786542
+      nfiles: 4
+    - path: src/data_split.py
+      hash: md5
+      md5: 69f5445c57145610d414c951eb5a6b2e
+      size: 1410
+    params:
+      params.yaml:
+        data.data_split:
+          val_size: 0.2
+    outs:
+    - path: data/split/train_identity_subset.jsonl
+      hash: md5
+      md5: 66cb44475b051e4f7a60e7dc25dfb473
+      size: 113352
+    - path: data/split/val_identity_subset.jsonl
+      hash: md5
+      md5: 14cde089109c039cbbd3627850938816
+      size: 29294
+  data_split@platypus_processed_subset.jsonl:
+    cmd: python src/data_split.py "data/processed/platypus_processed_subset.jsonl"
+    deps:
+    - path: data/processed
+      hash: md5
+      md5: e05e341599ebf40ffbc64602733bab2f.dir
+      size: 1786542
+      nfiles: 4
+    - path: src/data_split.py
+      hash: md5
+      md5: 69f5445c57145610d414c951eb5a6b2e
+      size: 1410
+    params:
+      params.yaml:
+        data.data_split:
+          val_size: 0.2
+    outs:
+    - path: data/split/train_platypus_processed_subset.jsonl
+      hash: md5
+      md5: 49aa6d718c7fc210dd7f04a236f7c877
+      size: 1025149
+    - path: data/split/val_platypus_processed_subset.jsonl
+      hash: md5
+      md5: 0ddf7662c658e44358857e48c780e779
+      size: 273293
+  sanity_check:
+    cmd: python src/sanity_check.py
+    deps:
+    - path: models/Llama-2-7b-finetuned-merged
+      hash: md5
+      md5: 6e229e571247b4a7a2eae59558a13e71.dir
+      size: 13478803645
+      nfiles: 8
+    - path: src/sanity_check.py
+      hash: md5
+      md5: f0527984831726c48537e2f4c3576520
+      size: 2552
+    outs:
+    - path: sanity_check_result/result.csv
+      hash: md5
+      md5: 25fff4c036c3a187683e51c31bdf3c68
+      size: 13050

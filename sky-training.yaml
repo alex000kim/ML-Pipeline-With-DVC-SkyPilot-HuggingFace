@@ -1,0 +1,18 @@
+name: sky-training
+resources:
+  accelerators: A10G:1
+  cpus: 8
+  cloud: aws
+  disk_size: 1024
+workdir: .
+file_mounts: 
+  ~/.ssh/id_rsa: ~/.ssh/id_rsa
+  ~/.ssh/id_rsa.pub: ~/.ssh/id_rsa.pub
+  ~/.gitconfig: ~/.gitconfig
+setup: |
+  pip install --upgrade pip
+  pip install -r requirements.txt
+run: |
+  dvc exp run --pull
+  dvc exp push origin
+  

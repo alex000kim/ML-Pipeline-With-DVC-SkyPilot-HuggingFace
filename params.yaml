@@ -1,0 +1,54 @@
+random_seed: 42
+data:
+  process_identity_data:
+    subset_size: 1 # either integer or float between 0 and 1
+    out_jsonl_filename: identity_subset.jsonl
+  process_orca_data:
+    subset_size: 200 # either integer or float between 0 and 1
+    out_jsonl_filename: orca_processed_subset.jsonl
+  process_platypus_data:
+    subset_size: 1000 # either integer or float between 0 and 1
+    out_jsonl_filename: platypus_processed_subset.jsonl
+  data_split:
+    val_size: 0.2 # either integer or float between 0 and 1
+train:
+  model_size: 7b
+  pretrained_model_path: models/Llama-2-13b-chat-hf
+  model_adapter_out_path: models/finetuned-model-adapter-13b
+  finetuned_model_out_path: models/Llama-2-13b-finetuned-merged
+  model_tokenizer_args:
+    use_4bit: true
+    bnb_4bit_compute_dtype: float16
+    bnb_4bit_quant_type: nf4
+    use_nested_quant: false
+    device_map:
+      '': 0
+  lora_args:
+    lora_alpha: 16
+    lora_dropout: 0.1
+    r: 64
+    bias: none
+    task_type: CAUSAL_LM
+  trainer_args: # https://huggingface.co/docs/transformers/main_classes/trainer#transformers.TrainingArguments
+    output_dir: dvclive/artifacts
+    num_train_epochs: 2
+    per_device_train_batch_size: 8
+    optim: paged_adamw_32bit
+    # When save_total_limit=1 and load_best_model_at_end=True, 
+    # it is possible that two checkpoints are saved: 
+    # the last one and the best one (if they are different).
+    save_total_limit: 1
+    load_best_model_at_end: true
+    save_steps: 20
+    logging_steps: 10
+    eval_steps: 10
+    lr_scheduler_type: constant
+    warmup_ratio: 0.03
+    # be careful with scientific notation in yaml
+    # https://github.com/yaml/pyyaml/issues/173
+    learning_rate: 2.0e-4
+    weight_decay: 0.001
+    fp16: false
+    bf16: true
+    group_by_length: true
+    evaluation_strategy: steps
