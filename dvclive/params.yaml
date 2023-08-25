@@ -18,7 +18,7 @@ adam_beta1: 0.9
 adam_beta2: 0.999
 adam_epsilon: 1e-08
 max_grad_norm: 1.0
-num_train_epochs: 2
+num_train_epochs: 4
 max_steps: -1
 lr_scheduler_type: constant
 warmup_ratio: 0.03
@@ -26,7 +26,7 @@ warmup_steps: 0
 log_level: passive
 log_level_replica: warning
 log_on_each_node: true
-logging_dir: dvclive/artifacts/runs/Aug24_02-22-15_ip-172-31-65-180
+logging_dir: dvclive/artifacts/runs/Aug24_21-15-15_ip-172-31-34-214
 logging_strategy: steps
 logging_first_step: false
 logging_steps: 10

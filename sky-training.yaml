@@ -13,6 +13,7 @@ setup: |
   pip install --upgrade pip
   pip install -r requirements.txt
 run: |
+  dvc pull dvclive/artifacts
   dvc exp run --pull
   dvc exp push origin
   
