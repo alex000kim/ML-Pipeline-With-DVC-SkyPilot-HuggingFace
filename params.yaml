@@ -31,7 +31,7 @@ train:
     task_type: CAUSAL_LM
   trainer_args: # https://huggingface.co/docs/transformers/main_classes/trainer#transformers.TrainingArguments
     output_dir: dvclive/artifacts
-    num_train_epochs: 1
+    num_train_epochs: 5
     per_device_train_batch_size: 8
     optim: paged_adamw_32bit
     # When save_total_limit=1 and load_best_model_at_end=True, 

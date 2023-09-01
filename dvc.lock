@@ -193,7 +193,7 @@ stages:
             task_type: CAUSAL_LM
           trainer_args:
             output_dir: dvclive/artifacts
-            num_train_epochs: 1
+            num_train_epochs: 5
             per_device_train_batch_size: 8
             optim: paged_adamw_32bit
             save_total_limit: 1
@@ -212,7 +212,7 @@ stages:
     outs:
     - path: models/finetuned-model-adapter-7b
       hash: md5
-      md5: 21b48d7da05f411e1756a46f7808d3b6.dir
+      md5: 5cf15f949b653f12eb290f04a4477d0a.dir
       size: 134264668
       nfiles: 3
   merge_model:
@@ -225,7 +225,7 @@ stages:
       nfiles: 16
     - path: models/finetuned-model-adapter-7b
       hash: md5
-      md5: 21b48d7da05f411e1756a46f7808d3b6.dir
+      md5: 5cf15f949b653f12eb290f04a4477d0a.dir
       size: 134264668
       nfiles: 3
     - path: src/merge_model.py
@@ -254,7 +254,7 @@ stages:
             task_type: CAUSAL_LM
           trainer_args:
             output_dir: dvclive/artifacts
-            num_train_epochs: 1
+            num_train_epochs: 5
             per_device_train_batch_size: 8
             optim: paged_adamw_32bit
             save_total_limit: 1
@@ -273,7 +273,7 @@ stages:
     outs:
     - path: models/Llama-2-7b-finetuned-merged
       hash: md5
-      md5: 1aa8fe8dc27b7570e124081443ca12be.dir
+      md5: f66ae7a0d19b144655a497a93adc43ad.dir
       size: 13478803645
       nfiles: 8
   process_platypus_data:
@@ -352,7 +352,7 @@ stages:
     deps:
     - path: models/Llama-2-7b-finetuned-merged
       hash: md5
-      md5: 1aa8fe8dc27b7570e124081443ca12be.dir
+      md5: f66ae7a0d19b144655a497a93adc43ad.dir
       size: 13478803645
       nfiles: 8
     - path: src/sanity_check.py
@@ -362,5 +362,5 @@ stages:
     outs:
     - path: sanity_check_result/result.csv
       hash: md5
-      md5: 222353a26fdc0c1853e4c693963a5787
-      size: 10456
+      md5: 16dbb65569482bb097b0dafa4da14d97
+      size: 12813
