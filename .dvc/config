@@ -1,0 +1,4 @@
+[core]
+    remote = storage
+['remote "storage"']
+    url = s3://dvc-public/llama2-finetune-dvc-skypilot/

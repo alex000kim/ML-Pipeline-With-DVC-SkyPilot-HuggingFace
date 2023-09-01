@@ -1,0 +1,83 @@
+stages:
+  generate_identity_data:
+    cmd: python src/generate_identity_data.py
+    deps:
+      - src/generate_identity_data.py
+    params:
+      - data.process_identity_data
+    outs:
+      - data/processed/identity_subset.jsonl
+  process_orca_data: 
+    cmd: python src/process_orca_data.py
+    deps:
+      - src/process_orca_data.py
+      # https://huggingface.co/datasets/Open-Orca/OpenOrca/blob/main/1M-GPT4-Augmented.parquet
+      - data/raw/1M-GPT4-Augmented.parquet 
+    params:
+      - data.process_orca_data
+    outs:
+      - data/processed/orca_processed_subset.jsonl
+  process_platypus_data: 
+    cmd: python src/process_platypus_data.py
+    deps:
+      - src/process_platypus_data.py
+      # https://huggingface.co/datasets/garage-bAInd/Open-Platypus/blob/main/data/train-00000-of-00001-5b226e5ae97bf4b1.parquet
+      - data/raw/open_platypus.parquet
+    params:
+      - data.process_platypus_data
+    outs:
+      - data/processed/platypus_processed_subset.jsonl
+  data_split:
+    foreach:
+      - identity_subset.jsonl
+      - orca_processed_subset.jsonl
+      - platypus_processed_subset.jsonl
+    do:
+      cmd: python src/data_split.py "data/processed/${item}"
+      deps:
+        - src/data_split.py
+        - data/processed
+      params:
+        - data.data_split
+      outs: # don't cache the split data to reduce data duplication
+        - data/split/train_${item}:
+            cache: false 
+        - data/split/val_${item}:
+            cache: false
+  merge_data:
+    cmd: python src/merge_data_splits.py && echo "N lines in train.jsonl" && wc -l data/final/train.jsonl && echo "N lines in val.jsonl" && wc -l data/final/val.jsonl
+    deps:
+      - src/merge_data_splits.py
+      - data/split/
+    outs:
+      - data/final/train.jsonl
+      - data/final/val.jsonl
+  train:
+    cmd: python src/train.py
+    deps:
+      - src/train.py
+      - data/final/train.jsonl
+      - data/final/val.jsonl
+      - models/Llama-2-${train.model_size}-chat-hf
+    params:
+      - train
+    outs:
+      - models/finetuned-model-adapter-${train.model_size}
+  merge_model:
+    cmd: python src/merge_model.py
+    deps:
+      - src/merge_model.py
+      - models/Llama-2-${train.model_size}-chat-hf
+      - models/finetuned-model-adapter-${train.model_size}
+    params:
+      - train
+    outs:
+      - models/Llama-2-${train.model_size}-finetuned-merged
+  sanity_check:
+    cmd: python src/sanity_check.py
+    deps:
+      - src/sanity_check.py
+      - models/Llama-2-${train.model_size}-finetuned-merged
+    outs:
+      - sanity_check_result/result.csv:
+          cache: false
